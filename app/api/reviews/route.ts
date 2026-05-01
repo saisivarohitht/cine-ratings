@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
 import clientPromise from "../../../lib/mongodb";
+import { recalculateMovieRating } from "@/lib/rating";
 
 type ReviewInput = {
   movieId?: string;
@@ -73,6 +74,7 @@ export async function POST(request: Request) {
     };
 
     const result = await reviewsCollection.insertOne(review);
+    await recalculateMovieRating(movieId);
 
     return NextResponse.json(
       {

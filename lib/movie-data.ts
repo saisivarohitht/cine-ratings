@@ -36,3 +36,15 @@ export async function getMovies() {
 
   return movies.map(mapMovieDocument);
 }
+
+export async function getMovieById(movieId: string) {
+  if (!ObjectId.isValid(movieId)) {
+    return null;
+  }
+
+  const client = await clientPromise;
+  const db = client.db();
+  const movie = (await db.collection("movies").findOne({ _id: new ObjectId(movieId) })) as MovieDocument | null;
+
+  return movie ? mapMovieDocument(movie) : null;
+}

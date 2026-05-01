@@ -71,3 +71,31 @@ export async function getReviews(movieId?: string) {
     };
   });
 }
+
+export async function getReviewById(reviewId: string) {
+  if (!ObjectId.isValid(reviewId)) {
+    return null;
+  }
+
+  const client = await clientPromise;
+  const db = client.db();
+  const review = (await db.collection("reviews").findOne({ _id: new ObjectId(reviewId) })) as ReviewDocument | null;
+
+  if (!review) {
+    return null;
+  }
+
+  const movie = (await db.collection("movies").findOne({ _id: new ObjectId(review.movieId) })) as MovieLookup | null;
+
+  return {
+    id: review._id.toString(),
+    movieId: review.movieId,
+    movieTitle: movie?.title ?? "Unknown movie",
+    movieYear: movie?.year,
+    moviePosterUrl: movie?.posterUrl,
+    rating: review.rating,
+    text: review.text,
+    author: review.author || "Anonymous",
+    createdAt: review.createdAt ? new Date(review.createdAt).toISOString() : new Date().toISOString(),
+  } satisfies ReviewWithMovie;
+}

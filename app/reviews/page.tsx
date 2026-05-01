@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { DeleteReviewButton } from "@/components/DeleteReviewButton";
 import { getMovies } from "@/lib/movie-data";
 import { getReviews } from "@/lib/review-data";
 
@@ -126,6 +127,13 @@ export default async function ReviewsPage({
                         {review.movieYear}
                       </span>
                     ) : null}
+                    <Link
+                      href={`/reviews/${review.id}/edit`}
+                      className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-amber-300/40 hover:bg-white/10"
+                    >
+                      Edit review
+                    </Link>
+                    <DeleteReviewButton reviewId={review.id} />
                   </div>
                 </div>
               </article>
