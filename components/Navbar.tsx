@@ -11,6 +11,9 @@ export function Navbar() {
           <Link href="/" className="transition hover:text-white">
             Home
           </Link>
+          <Link href="/admin" className="transition hover:text-white">
+            Add movie
+          </Link>
           <Link href="/reviews" className="transition hover:text-white">
             Reviews
           </Link>
