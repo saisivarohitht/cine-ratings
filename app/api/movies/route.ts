@@ -1,11 +1,10 @@
-import clientPromise from '../../../lib/mongodb';
+import { getMovies } from "@/lib/movie-data";
+import clientPromise from "../../../lib/mongodb";
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const client = await clientPromise;
-    const db = client.db();
-    const movies = await db.collection('movies').find({}).limit(100).toArray();
+    const movies = await getMovies();
     return NextResponse.json(movies);
   } catch (err) {
     console.error(err);

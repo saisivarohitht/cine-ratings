@@ -1,8 +1,12 @@
 import { MovieList } from "@/components/MovieList";
 import { Navbar } from "@/components/Navbar";
 import { sampleMovies } from "@/lib/sample-movies";
+import { getMovies } from "@/lib/movie-data";
 
-export default function Home() {
+export default async function Home() {
+  const movies = await getMovies();
+  const featuredMovies = movies.length > 0 ? movies : sampleMovies;
+
   return (
     <div className="min-h-screen bg-[#0b1020] text-white">
       <Navbar />
@@ -20,9 +24,14 @@ export default function Home() {
           <div className="flex items-end justify-between gap-4">
             <div>
               <h2 className="text-2xl font-semibold">Featured movies</h2>
+              <p className="mt-1 text-sm text-slate-400">
+                {movies.length > 0
+                  ? "Live movies from MongoDB"
+                  : "Demo movies while the collection is empty"}
+              </p>
             </div>
           </div>
-          <MovieList movies={sampleMovies} />
+          <MovieList movies={featuredMovies} />
         </section>
       </main>
     </div>
