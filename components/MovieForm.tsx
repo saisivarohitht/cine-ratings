@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { showToast } from "@/components/Toast";
 
 type MovieFormState = {
   title: string;
@@ -9,7 +10,14 @@ type MovieFormState = {
   genre: string;
   rating: string;
   overview: string;
-  posterUrl: string;
+  // card image (500x333)
+  cardFilename?: string;
+  cardMime?: string;
+  cardData?: string;
+  // detail image (1000x667)
+  detailFilename?: string;
+  detailMime?: string;
+  detailData?: string;
 };
 
 const initialState: MovieFormState = {
@@ -18,19 +26,22 @@ const initialState: MovieFormState = {
   genre: "Drama",
   rating: "8",
   overview: "",
-  posterUrl: "",
+  cardFilename: undefined,
+  cardMime: undefined,
+  cardData: undefined,
+  detailFilename: undefined,
+  detailMime: undefined,
+  detailData: undefined,
 };
 
 export function MovieForm() {
   const router = useRouter();
   const [form, setForm] = useState<MovieFormState>(initialState);
-  const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
-    setStatus(null);
 
     try {
       const response = await fetch("/api/movies", {
@@ -44,13 +55,19 @@ export function MovieForm() {
           genre: form.genre,
           rating: Number(form.rating),
           overview: form.overview,
-          posterUrl: form.posterUrl,
+          cardImage: form.cardData
+            ? { filename: form.cardFilename, mime: form.cardMime, data: form.cardData }
+            : undefined,
+          detailImage: form.detailData
+            ? { filename: form.detailFilename, mime: form.detailMime, data: form.detailData }
+            : undefined,
         }),
       });
 
       const data = (await response.json()) as {
         error?: string;
         insertedId?: string;
+        errors?: any;
       };
 
       if (!response.ok) {
@@ -58,14 +75,14 @@ export function MovieForm() {
       }
 
       setForm(initialState);
-      setStatus("Movie added successfully.");
+      showToast("Movie added successfully!", "success");
 
       if (data.insertedId) {
         router.push(`/movie/${data.insertedId}`);
         router.refresh();
       }
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Something went wrong");
+      showToast(error instanceof Error ? error.message : "Something went wrong", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -128,13 +145,103 @@ export function MovieForm() {
         </label>
 
         <label className="space-y-2 text-sm text-slate-300 sm:col-span-2">
-          <span>Poster URL</span>
-          <input
-            value={form.posterUrl}
-            onChange={(event) => setForm((current) => ({ ...current, posterUrl: event.target.value }))}
-            placeholder="https://..."
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-amber-300/50"
-          />
+          <span>Card image (500×333)</span>
+          <div className="flex items-center gap-3">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const result = reader.result as string | null;
+                  if (!result) return;
+                  const comma = result.indexOf(",");
+                  const meta = result.substring(5, comma);
+                  const mime = meta.split(";")[0];
+                  const data = result.substring(comma + 1);
+                  setForm((current) => ({
+                    ...current,
+                    cardFilename: file.name,
+                    cardMime: mime,
+                    cardData: data,
+                  }));
+                };
+                reader.readAsDataURL(file);
+              }}
+              className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/50"
+            />
+
+            {form.cardData ? (
+              <div className="flex items-center gap-3">
+                <img
+                  src={`data:${form.cardMime};base64,${form.cardData}`}
+                  alt="card preview"
+                  className="h-20 w-32 rounded object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((current) => ({ ...current, cardFilename: undefined, cardMime: undefined, cardData: undefined }))
+                  }
+                  className="text-sm text-amber-300 hover:text-amber-200"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </label>
+
+        <label className="space-y-2 text-sm text-slate-300 sm:col-span-2">
+          <span>Detail image (1000×667)</span>
+          <div className="flex items-center gap-3">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const result = reader.result as string | null;
+                  if (!result) return;
+                  const comma = result.indexOf(",");
+                  const meta = result.substring(5, comma);
+                  const mime = meta.split(";")[0];
+                  const data = result.substring(comma + 1);
+                  setForm((current) => ({
+                    ...current,
+                    detailFilename: file.name,
+                    detailMime: mime,
+                    detailData: data,
+                  }));
+                };
+                reader.readAsDataURL(file);
+              }}
+              className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/50"
+            />
+
+            {form.detailData ? (
+              <div className="flex items-center gap-3">
+                <img
+                  src={`data:${form.detailMime};base64,${form.detailData}`}
+                  alt="detail preview"
+                  className="h-20 w-32 rounded object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((current) => ({ ...current, detailFilename: undefined, detailMime: undefined, detailData: undefined }))
+                  }
+                  className="text-sm text-amber-300 hover:text-amber-200"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : null}
+          </div>
         </label>
 
         <label className="space-y-2 text-sm text-slate-300 sm:col-span-2">
@@ -157,7 +264,6 @@ export function MovieForm() {
         >
           {isSubmitting ? "Saving..." : "Save movie"}
         </button>
-        {status ? <p className="text-sm text-slate-300">{status}</p> : null}
       </div>
     </form>
   );

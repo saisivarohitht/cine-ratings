@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { showToast } from "@/components/Toast";
 
 type DeleteMovieButtonProps = {
   movieId: string;
@@ -30,9 +31,11 @@ export function DeleteMovieButton({ movieId }: DeleteMovieButtonProps) {
         throw new Error(data.error || "Failed to delete movie");
       }
 
+      showToast("Movie deleted successfully!", "success");
       router.refresh();
+      router.push("/admin");
     } catch (error) {
-      window.alert(error instanceof Error ? error.message : "Something went wrong");
+      showToast(error instanceof Error ? error.message : "Something went wrong", "error");
     } finally {
       setIsDeleting(false);
     }

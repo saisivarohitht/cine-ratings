@@ -1,19 +1,23 @@
+"use client";
+
 import Link from "next/link";
 
 import type { Movie } from "@/types/movie";
+import { DEFAULT_POSTER_URL } from "@/lib/constants";
+import { useState } from "react";
 
 type MovieCardProps = {
   movie: Movie;
 };
 
 export function MovieCard({ movie }: MovieCardProps) {
+  const [posterSrc, setPosterSrc] = useState(movie.posterThumbUrl || movie.posterUrl || DEFAULT_POSTER_URL);
+
   return (
     <article className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-black/20 transition hover:-translate-y-1 hover:border-amber-300/40 hover:bg-white/10">
-      <img
-        src={movie.posterUrl}
-        alt={movie.title}
-        className="h-64 w-full object-cover"
-      />
+      <div className="w-full aspect-3/2 overflow-hidden">
+        <img src={posterSrc} alt={movie.title} className="h-full w-full object-cover" onError={() => { if (posterSrc !== DEFAULT_POSTER_URL) setPosterSrc(DEFAULT_POSTER_URL); }} />
+      </div>
       <div className="space-y-3 p-5">
         <div className="flex items-start justify-between gap-4">
           <div>

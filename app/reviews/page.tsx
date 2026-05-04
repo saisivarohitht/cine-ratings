@@ -1,19 +1,73 @@
 import Link from "next/link";
 
 import { DeleteReviewButton } from "@/components/DeleteReviewButton";
+import { ReviewSearchControls } from "@/components/ReviewSearchControls";
 import { getMovies } from "@/lib/movie-data";
 import { getReviews } from "@/lib/review-data";
+
+type ReviewsSearchParams = {
+  movieId?: string;
+  q?: string;
+  sort?: string;
+};
+
+function buildReviewsHref(movieId: string | undefined, query: string, sort: string) {
+  const search = new URLSearchParams();
+
+  if (movieId) {
+    search.set("movieId", movieId);
+  }
+
+  if (query) {
+    search.set("q", query);
+  }
+
+  if (sort !== "newest") {
+    search.set("sort", sort);
+  }
+
+  const queryString = search.toString();
+  return queryString ? `/reviews?${queryString}` : "/reviews";
+}
 
 export default async function ReviewsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ movieId?: string }>;
+  searchParams?: Promise<ReviewsSearchParams>;
 }) {
   const params = searchParams ? await searchParams : undefined;
-  const movieId = params?.movieId;
+  const movieId = params?.movieId || "";
+  const query = params?.q?.trim() || "";
+  const sort = params?.sort || "newest";
 
-  const [movies, reviews] = await Promise.all([getMovies(), getReviews(movieId)]);
+  const [movies, allReviews] = await Promise.all([getMovies(), getReviews(movieId)]);
   const selectedMovie = movieId ? movies.find((movie) => movie.id === movieId) : undefined;
+  const reviewSuggestions = allReviews.flatMap((review) => [
+    review.movieTitle,
+    review.author,
+    review.text,
+  ]);
+
+  const filteredReviews = query
+    ? allReviews.filter((review) => {
+        const haystack = `${review.movieTitle} ${review.author} ${review.text}`.toLowerCase();
+        return haystack.includes(query.toLowerCase());
+      })
+    : allReviews;
+
+  const reviews = [...filteredReviews].sort((a, b) => {
+    switch (sort) {
+      case "oldest":
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      case "rating-desc":
+        return b.rating - a.rating;
+      case "rating-asc":
+        return a.rating - b.rating;
+      case "newest":
+      default:
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+  });
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 px-6 py-12 text-white lg:px-8">
@@ -38,7 +92,7 @@ export default async function ReviewsPage({
           </div>
           {movieId ? (
             <Link
-              href="/reviews"
+              href={buildReviewsHref(undefined, query, sort)}
               className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-amber-300/40 hover:bg-white/10"
             >
               Show all reviews
@@ -48,30 +102,26 @@ export default async function ReviewsPage({
       </section>
 
       <section className="space-y-4">
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/reviews"
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              !movieId
-                ? "bg-amber-300 text-slate-950"
-                : "border border-white/10 bg-white/5 text-slate-200 hover:border-amber-300/40 hover:bg-white/10"
-            }`}
-          >
-            All movies
-          </Link>
-          {movies.map((movie) => (
+        <ReviewSearchControls
+          movieId={movieId}
+          query={query}
+          sort={sort}
+          movieOptions={movies.map((movie) => ({ id: movie.id, title: movie.title }))}
+          suggestions={reviewSuggestions}
+        />
+
+        <div className="flex items-center justify-between gap-3 text-sm text-slate-400">
+          <p>
+            Showing {reviews.length} review{reviews.length === 1 ? "" : "s"}
+          </p>
+          {(query || sort !== "newest") ? (
             <Link
-              key={movie.id}
-              href={`/reviews?movieId=${movie.id}`}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                movieId === movie.id
-                  ? "bg-amber-300 text-slate-950"
-                  : "border border-white/10 bg-white/5 text-slate-200 hover:border-amber-300/40 hover:bg-white/10"
-              }`}
+              href={buildReviewsHref(movieId, "", "newest")}
+              className="text-amber-300 hover:text-amber-200"
             >
-              {movie.title}
+              Reset search and sort
             </Link>
-          ))}
+          ) : null}
         </div>
 
         {reviews.length > 0 ? (

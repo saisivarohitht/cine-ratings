@@ -6,4 +6,6 @@ export type Movie = {
   rating: number;
   overview: string;
   posterUrl: string;
+  posterThumbUrl?: string;
+  posterDetailUrl?: string;
 };

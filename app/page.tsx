@@ -1,11 +1,53 @@
+import Link from "next/link";
+
 import { MovieList } from "@/components/MovieList";
+import { MovieSearchControls } from "@/components/MovieSearchControls";
 import { Navbar } from "@/components/Navbar";
 import { sampleMovies } from "@/lib/sample-movies";
 import { getMovies } from "@/lib/movie-data";
 
-export default async function Home() {
+type HomeSearchParams = {
+  q?: string;
+  sort?: string;
+};
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<HomeSearchParams>;
+}) {
+  const params = searchParams ? await searchParams : undefined;
+  const query = params?.q?.trim() || "";
+  const sort = params?.sort || "rating-desc";
+
   const movies = await getMovies();
-  const featuredMovies = movies.length > 0 ? movies : sampleMovies;
+  const sourceMovies = movies.length > 0 ? movies : sampleMovies;
+  const movieSuggestions = sourceMovies.flatMap((movie) => [movie.title, movie.genre]);
+
+  const filteredMovies = query
+    ? sourceMovies.filter((movie) => {
+        const haystack = `${movie.title} ${movie.genre} ${movie.overview}`.toLowerCase();
+        return haystack.includes(query.toLowerCase());
+      })
+    : sourceMovies;
+
+  const featuredMovies = [...filteredMovies].sort((a, b) => {
+    switch (sort) {
+      case "rating-asc":
+        return a.rating - b.rating;
+      case "year-desc":
+        return b.year - a.year;
+      case "year-asc":
+        return a.year - b.year;
+      case "title-asc":
+        return a.title.localeCompare(b.title);
+      case "title-desc":
+        return b.title.localeCompare(a.title);
+      case "rating-desc":
+      default:
+        return b.rating - a.rating;
+    }
+  });
 
   return (
     <div className="min-h-screen bg-[#0b1020] text-white">
@@ -31,6 +73,20 @@ export default async function Home() {
               </p>
             </div>
           </div>
+
+          <MovieSearchControls query={query} sort={sort} suggestions={movieSuggestions} />
+
+          <div className="flex items-center justify-between gap-3 text-sm text-slate-400">
+            <p>
+              Showing {featuredMovies.length} movie{featuredMovies.length === 1 ? "" : "s"}
+            </p>
+            {(query || sort !== "rating-desc") ? (
+              <Link href="/" className="text-amber-300 hover:text-amber-200">
+                Reset filters
+              </Link>
+            ) : null}
+          </div>
+
           <MovieList movies={featuredMovies} />
         </section>
       </main>

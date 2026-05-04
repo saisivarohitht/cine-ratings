@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { showToast } from "@/components/Toast";
 
 type DeleteReviewButtonProps = {
   reviewId: string;
@@ -30,9 +31,10 @@ export function DeleteReviewButton({ reviewId }: DeleteReviewButtonProps) {
         throw new Error(data.error || "Failed to delete review");
       }
 
+      showToast("Review deleted successfully!", "success");
       router.refresh();
     } catch (error) {
-      window.alert(error instanceof Error ? error.message : "Something went wrong");
+      showToast(error instanceof Error ? error.message : "Something went wrong", "error");
     } finally {
       setIsDeleting(false);
     }

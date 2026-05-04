@@ -22,6 +22,8 @@ type PageMovie = {
   rating?: number;
   overview: string;
   posterUrl?: string;
+  posterThumbUrl?: string;
+  posterDetailUrl?: string;
 };
 
 function getFallbackMovie(id: string): PageMovie | null {
@@ -38,6 +40,8 @@ function getFallbackMovie(id: string): PageMovie | null {
     rating: movie.rating,
     overview: movie.overview,
     posterUrl: movie.posterUrl,
+    posterThumbUrl: movie.posterThumbUrl,
+    posterDetailUrl: movie.posterDetailUrl,
   };
 }
 
@@ -66,6 +70,8 @@ export default async function MovieDetailsPage({
         rating: typeof movieDocument.rating === "number" ? movieDocument.rating : undefined,
         overview: String(movieDocument.overview ?? movieDocument.description ?? "No description available yet."),
         posterUrl: typeof movieDocument.posterUrl === "string" ? movieDocument.posterUrl : undefined,
+        posterThumbUrl: typeof movieDocument.posterThumbUrl === "string" ? movieDocument.posterThumbUrl : undefined,
+        posterDetailUrl: typeof movieDocument.posterDetailUrl === "string" ? movieDocument.posterDetailUrl : undefined,
       };
       databaseMovieId = id;
       reviews = (await db
@@ -94,7 +100,7 @@ export default async function MovieDetailsPage({
       <section className="grid gap-8 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/20 lg:grid-cols-[320px_1fr] lg:p-8">
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60">
           {movie.posterUrl ? (
-            <img src={movie.posterUrl} alt={movie.title} className="h-full w-full object-cover" />
+            <img src={movie.posterDetailUrl || movie.posterUrl} alt={movie.title} className="h-full w-full object-cover" />
           ) : (
             <div className="flex min-h-105 items-center justify-center bg-linear-to-br from-amber-300/30 via-slate-950 to-slate-900 px-6 text-center text-3xl font-semibold text-white">
               {movie.title}

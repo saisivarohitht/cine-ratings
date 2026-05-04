@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { showToast } from "@/components/Toast";
 
 type ReviewEditFormProps = {
   review: {
@@ -19,13 +20,11 @@ export function ReviewEditForm({ review }: ReviewEditFormProps) {
   const [author, setAuthor] = useState(review.author);
   const [rating, setRating] = useState(String(review.rating));
   const [text, setText] = useState(review.text);
-  const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
-    setStatus(null);
 
     try {
       const response = await fetch(`/api/reviews/${review.id}`, {
@@ -46,11 +45,11 @@ export function ReviewEditForm({ review }: ReviewEditFormProps) {
         throw new Error(data.error || "Failed to update review");
       }
 
-      setStatus("Review updated successfully.");
+      showToast("Review updated successfully!", "success");
       router.refresh();
       router.push(`/reviews?movieId=${review.movieId}`);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Something went wrong");
+      showToast(error instanceof Error ? error.message : "Something went wrong", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -83,7 +82,6 @@ export function ReviewEditForm({ review }: ReviewEditFormProps) {
         <button type="submit" disabled={isSubmitting} className="rounded-full bg-amber-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60">
           {isSubmitting ? "Saving..." : "Save changes"}
         </button>
-        {status ? <p className="text-sm text-slate-300">{status}</p> : null}
       </div>
     </form>
   );

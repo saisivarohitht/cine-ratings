@@ -1,7 +1,10 @@
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
+import fs from 'fs/promises';
+import path from 'path';
 
 import clientPromise from "../../../../lib/mongodb";
+import { UpdateMovieSchema } from "../../../../lib/schemas";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -65,49 +68,75 @@ export async function PUT(request: Request, { params }: Params) {
     }
 
     const body = await request.json();
-    const title = typeof body.title === "string" ? body.title.trim() : "";
-    const year = Number(body.year);
-    const genre = typeof body.genre === "string" ? body.genre.trim() : "";
-    const overview = typeof body.overview === "string" ? body.overview.trim() : "";
-    const rating = Number(body.rating);
-    const posterUrl = typeof body.posterUrl === "string" ? body.posterUrl.trim() : "";
 
-    if (!title) {
-      return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    // Validate input using Zod schema
+    const validation = UpdateMovieSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", errors: validation.error.flatten() },
+        { status: 400 }
+      );
     }
 
-    if (!Number.isFinite(year) || year < 1800 || year > 2100) {
-      return NextResponse.json({ error: "Year must be a valid number" }, { status: 400 });
+    const { title, year, genre, overview, rating, cardImage, detailImage } = validation.data;
+
+    // Handle image uploads
+    let posterThumbUrl: string | undefined = undefined;
+    let posterDetailUrl: string | undefined = undefined;
+
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    await fs.mkdir(uploadsDir, { recursive: true });
+
+    // Save card image (500×333)
+    if (cardImage) {
+      try {
+        const rawName = cardImage.filename;
+        const safeName = rawName.replace(/[^a-z0-9.\-_]/gi, '_');
+        const unique = `${Date.now()}-card-${safeName}`;
+        const filePath = path.join(uploadsDir, unique);
+        const buffer = Buffer.from(cardImage.data, 'base64');
+        await fs.writeFile(filePath, buffer);
+        posterThumbUrl = `/uploads/${unique}`;
+      } catch (e) {
+        console.error('Failed to write card image:', e);
+      }
     }
 
-    if (!genre) {
-      return NextResponse.json({ error: "Genre is required" }, { status: 400 });
-    }
-
-    if (!overview) {
-      return NextResponse.json({ error: "Overview is required" }, { status: 400 });
-    }
-
-    if (!Number.isFinite(rating) || rating < 0 || rating > 10) {
-      return NextResponse.json({ error: "Rating must be between 0 and 10" }, { status: 400 });
+    // Save detail image (1000×667)
+    if (detailImage) {
+      try {
+        const rawName = detailImage.filename;
+        const safeName = rawName.replace(/[^a-z0-9.\-_]/gi, '_');
+        const unique = `${Date.now()}-detail-${safeName}`;
+        const filePath = path.join(uploadsDir, unique);
+        const buffer = Buffer.from(detailImage.data, 'base64');
+        await fs.writeFile(filePath, buffer);
+        posterDetailUrl = `/uploads/${unique}`;
+      } catch (e) {
+        console.error('Failed to write detail image:', e);
+      }
     }
 
     const client = await clientPromise;
     const db = client.db();
 
-    const result = await db.collection("movies").updateOne(
-      { _id: new ObjectId(id) },
-      {
-        $set: {
-          title,
-          year,
-          genre,
-          overview,
-          rating,
-          posterUrl: posterUrl || undefined,
-        },
-      }
-    );
+    const update: any = {
+      title,
+      year,
+      genre,
+      overview,
+      rating,
+    };
+
+    if (posterThumbUrl) {
+      update.posterThumbUrl = posterThumbUrl;
+    }
+
+    if (posterDetailUrl) {
+      update.posterDetailUrl = posterDetailUrl;
+    }
+
+    const result = await db.collection("movies").updateOne({ _id: new ObjectId(id) }, { $set: update });
 
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: "Movie not found" }, { status: 404 });

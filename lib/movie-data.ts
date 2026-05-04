@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 
 import clientPromise from "@/lib/mongodb";
+import { DEFAULT_POSTER_URL } from "@/lib/constants";
 import type { Movie } from "@/types/movie";
 
 export type MovieDocument = {
@@ -12,10 +13,9 @@ export type MovieDocument = {
   overview?: string;
   description?: string;
   posterUrl?: string;
+  posterThumbUrl?: string;
+  posterDetailUrl?: string;
 };
-
-const DEFAULT_POSTER_URL =
-  "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=900&q=80";
 
 export function mapMovieDocument(document: MovieDocument): Movie {
   return {
@@ -26,6 +26,20 @@ export function mapMovieDocument(document: MovieDocument): Movie {
     rating: typeof document.rating === "number" ? document.rating : 0,
     overview: String(document.overview ?? document.description ?? "No description available yet."),
     posterUrl: typeof document.posterUrl === "string" ? document.posterUrl : DEFAULT_POSTER_URL,
+    posterThumbUrl:
+      typeof document.posterThumbUrl === "string"
+        ? document.posterThumbUrl
+        : typeof document.posterUrl === "string"
+        ? document.posterUrl
+        : DEFAULT_POSTER_URL,
+    posterDetailUrl:
+      typeof document.posterDetailUrl === "string"
+        ? document.posterDetailUrl
+        : typeof document.posterThumbUrl === "string"
+        ? document.posterThumbUrl
+        : typeof document.posterUrl === "string"
+        ? document.posterUrl
+        : DEFAULT_POSTER_URL,
   };
 }
 

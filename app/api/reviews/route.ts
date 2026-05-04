@@ -3,13 +3,7 @@ import { NextResponse } from "next/server";
 
 import clientPromise from "../../../lib/mongodb";
 import { recalculateMovieRating } from "@/lib/rating";
-
-type ReviewInput = {
-  movieId?: string;
-  rating?: number;
-  text?: string;
-  author?: string;
-};
+import { CreateReviewSchema } from "@/lib/schemas";
 
 export async function GET(request: Request) {
   try {
@@ -36,22 +30,21 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as ReviewInput;
-    const movieId = body.movieId?.trim();
-    const rating = body.rating;
-    const text = body.text?.trim();
-    const author = body.author?.trim() || "Anonymous";
+    const body = await request.json();
 
-    if (!movieId || !ObjectId.isValid(movieId)) {
+    // Validate input using Zod schema
+    const validation = CreateReviewSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", errors: validation.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { movieId, rating, text, author } = validation.data;
+
+    if (!ObjectId.isValid(movieId)) {
       return NextResponse.json({ error: "A valid movieId is required" }, { status: 400 });
-    }
-
-    if (typeof rating !== "number" || rating < 1 || rating > 10) {
-      return NextResponse.json({ error: "Rating must be a number between 1 and 10" }, { status: 400 });
-    }
-
-    if (!text) {
-      return NextResponse.json({ error: "Review text is required" }, { status: 400 });
     }
 
     const client = await clientPromise;
@@ -69,7 +62,7 @@ export async function POST(request: Request) {
       movieId,
       rating,
       text,
-      author,
+      author: author || "Anonymous",
       createdAt: new Date(),
     };
 

@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { showToast } from "@/components/Toast";
 
 type ReviewFormProps = {
   movieId: string;
@@ -12,13 +13,11 @@ export function ReviewForm({ movieId }: ReviewFormProps) {
   const [author, setAuthor] = useState("");
   const [rating, setRating] = useState(8);
   const [text, setText] = useState("");
-  const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
-    setStatus(null);
 
     try {
       const response = await fetch("/api/reviews", {
@@ -30,7 +29,7 @@ export function ReviewForm({ movieId }: ReviewFormProps) {
           movieId,
           rating,
           text,
-          author,
+          author: author || undefined,
         }),
       });
 
@@ -43,10 +42,10 @@ export function ReviewForm({ movieId }: ReviewFormProps) {
       setAuthor("");
       setRating(8);
       setText("");
-      setStatus("Review posted successfully.");
+      showToast("Review posted successfully!", "success");
       router.refresh();
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Something went wrong");
+      showToast(error instanceof Error ? error.message : "Something went wrong", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -104,7 +103,6 @@ export function ReviewForm({ movieId }: ReviewFormProps) {
         >
           {isSubmitting ? "Posting..." : "Post review"}
         </button>
-        {status ? <p className="text-sm text-slate-300">{status}</p> : null}
       </div>
     </form>
   );
