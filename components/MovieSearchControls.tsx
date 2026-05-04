@@ -49,7 +49,7 @@ export function MovieSearchControls({ query, sort, suggestions }: MovieSearchCon
 
   return (
     <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 sm:grid-cols-[1fr_auto]">
-      <div>
+      <div className="relative">
         <Autocomplete
           id="movie-search"
           value={localQuery}
@@ -58,6 +58,18 @@ export function MovieSearchControls({ query, sort, suggestions }: MovieSearchCon
           suggestions={uniqueSuggestions}
           placeholder="Search by title, genre, or overview"
         />
+        {localQuery && (
+          <button
+            type="button"
+            onClick={() => setLocalQuery("")}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition"
+            aria-label="Clear search"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <select

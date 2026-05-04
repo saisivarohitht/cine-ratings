@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 import { DeleteMovieButton } from "@/components/DeleteMovieButton";
 import { MovieForm } from "@/components/MovieForm";
 import { getMovies } from "@/lib/movie-data";

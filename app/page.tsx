@@ -3,12 +3,14 @@ import Link from "next/link";
 import { MovieList } from "@/components/MovieList";
 import { MovieSearchControls } from "@/components/MovieSearchControls";
 import { Navbar } from "@/components/Navbar";
+import { Pagination } from "@/components/Pagination";
 import { sampleMovies } from "@/lib/sample-movies";
 import { getMovies } from "@/lib/movie-data";
 
 type HomeSearchParams = {
   q?: string;
   sort?: string;
+  page?: string;
 };
 
 export default async function Home({
@@ -19,6 +21,8 @@ export default async function Home({
   const params = searchParams ? await searchParams : undefined;
   const query = params?.q?.trim() || "";
   const sort = params?.sort || "rating-desc";
+  const page = Math.max(1, Number(params?.page) || 1);
+  const limit = 12;
 
   const movies = await getMovies();
   const sourceMovies = movies.length > 0 ? movies : sampleMovies;
@@ -31,7 +35,7 @@ export default async function Home({
       })
     : sourceMovies;
 
-  const featuredMovies = [...filteredMovies].sort((a, b) => {
+  const sortedMovies = [...filteredMovies].sort((a, b) => {
     switch (sort) {
       case "rating-asc":
         return a.rating - b.rating;
@@ -48,6 +52,21 @@ export default async function Home({
         return b.rating - a.rating;
     }
   });
+
+  // Paginate results
+  const total = sortedMovies.length;
+  const totalPages = Math.ceil(total / limit);
+  const skip = (page - 1) * limit;
+  const paginatedMovies = sortedMovies.slice(skip, skip + limit);
+
+  // Build pagination URL
+  const buildPageUrl = (newPage: number) => {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (sort !== "rating-desc") params.set("sort", sort);
+    params.set("page", String(newPage));
+    return `/?${params.toString()}`;
+  };
 
   return (
     <div className="min-h-screen bg-[#0b1020] text-white">
@@ -78,7 +97,7 @@ export default async function Home({
 
           <div className="flex items-center justify-between gap-3 text-sm text-slate-400">
             <p>
-              Showing {featuredMovies.length} movie{featuredMovies.length === 1 ? "" : "s"}
+              Showing {paginatedMovies.length} of {total} movie{total === 1 ? "" : "s"}
             </p>
             {(query || sort !== "rating-desc") ? (
               <Link href="/" className="text-amber-300 hover:text-amber-200">
@@ -87,7 +106,30 @@ export default async function Home({
             ) : null}
           </div>
 
-          <MovieList movies={featuredMovies} />
+          <MovieList movies={paginatedMovies} />
+
+          {totalPages > 1 && (
+            <div className="flex justify-center">
+              <div className="inline-block">
+                {[...Array(totalPages)].map((_, i) => {
+                  const pageNum = i + 1;
+                  return (
+                    <Link
+                      key={pageNum}
+                      href={buildPageUrl(pageNum)}
+                      className={`inline-block px-3 py-2 mx-1 rounded transition ${
+                        page === pageNum
+                          ? "bg-amber-300 text-slate-950 font-semibold"
+                          : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                      }`}
+                    >
+                      {pageNum}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </section>
       </main>
     </div>
