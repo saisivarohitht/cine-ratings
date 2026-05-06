@@ -27,6 +27,36 @@ export const CreateReviewSchema = z.object({
 
 export const UpdateReviewSchema = CreateReviewSchema;
 
+export const AuthLoginSchema = z.object({
+  username: z.string().trim().min(3, "Username is required and must be at least 3 characters long.").max(50, "Username must be 50 characters or fewer."),
+  password: z.string().min(8, "Password must be at least 8 characters long."),
+});
+
+export const AuthSignupSchema = AuthLoginSchema.extend({
+  email: z.string().trim().email("Email is required and must be valid."),
+  confirmPassword: z.string().min(8, "Confirm password must be at least 8 characters long."),
+}).refine((data) => data.password === data.confirmPassword, {
+  path: ["confirmPassword"],
+  message: "Passwords do not match.",
+});
+
+export const AuthRecoverySchema = z.object({
+  email: z.string().trim().email("Email is required and must be valid."),
+});
+
+export const PasswordResetSchema = z.object({
+  token: z.string().min(1, "Reset token is required."),
+  password: z.string().min(8, "Password must be at least 8 characters long."),
+  confirmPassword: z.string().min(8, "Confirm password must be at least 8 characters long."),
+}).refine((data) => data.password === data.confirmPassword, {
+  path: ["confirmPassword"],
+  message: "Passwords do not match.",
+});
+
 export type CreateMovieInput = z.infer<typeof CreateMovieSchema>;
 export type UpdateMovieInput = z.infer<typeof UpdateMovieSchema>;
 export type CreateReviewInput = z.infer<typeof CreateReviewSchema>;
+export type AuthLoginInput = z.infer<typeof AuthLoginSchema>;
+export type AuthSignupInput = z.infer<typeof AuthSignupSchema>;
+export type AuthRecoveryInput = z.infer<typeof AuthRecoverySchema>;
+export type PasswordResetInput = z.infer<typeof PasswordResetSchema>;

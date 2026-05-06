@@ -1,11 +1,15 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { MovieList } from "@/components/MovieList";
 import { MovieSearchControls } from "@/components/MovieSearchControls";
 import { Navbar } from "@/components/Navbar";
 import { Pagination } from "@/components/Pagination";
+import { getSession, validateSession } from "@/lib/auth";
 import { sampleMovies } from "@/lib/sample-movies";
 import { getMovies } from "@/lib/movie-data";
+
+export const dynamic = "force-dynamic";
 
 type HomeSearchParams = {
   q?: string;
@@ -18,6 +22,12 @@ export default async function Home({
 }: {
   searchParams?: Promise<HomeSearchParams>;
 }) {
+  const session = await getSession();
+
+  if (!(await validateSession(session || ""))) {
+    redirect("/signup");
+  }
+
   const params = searchParams ? await searchParams : undefined;
   const query = params?.q?.trim() || "";
   const sort = params?.sort || "rating-desc";

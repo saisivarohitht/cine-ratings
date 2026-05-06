@@ -2,36 +2,49 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 export function AdminGuard({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    let active = true;
 
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/auth/check');
-      const data = await response.json();
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/auth/check');
+        const data = await response.json();
 
-      if (!data.authenticated) {
-        router.push('/login');
-      } else {
-        setIsAuthenticated(true);
+        if (!active) {
+          return;
+        }
+
+        if (!data.authenticated) {
+          router.replace('/login');
+        } else if (!data.user?.isAdmin) {
+          router.replace('/');
+        } else {
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        if (active) {
+          router.replace('/login');
+        }
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      router.push('/login');
     }
-  };
+
+    void checkAuth();
+
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/');
+      router.replace('/login');
     } catch (error) {
       console.error('Logout failed:', error);
     }

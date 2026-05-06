@@ -1,32 +1,39 @@
 import { NextResponse } from 'next/server';
-import { createSession } from '@/lib/auth';
+import { createSession, authenticateUser } from '@/lib/auth';
+import { AuthLoginSchema } from '@/lib/schemas';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { password } = body;
+    const validation = AuthLoginSchema.safeParse(body);
 
-    const adminPassword = process.env.ADMIN_PASSWORD;
-
-    if (!adminPassword) {
-      console.error('ADMIN_PASSWORD environment variable is not set');
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Authentication not configured' },
-        { status: 500 }
+        { error: validation.error.issues[0]?.message || 'Invalid login details' },
+        { status: 400 }
       );
     }
 
-    if (!password || password !== adminPassword) {
+    const user = await authenticateUser({
+      username: validation.data.username,
+      password: validation.data.password,
+    });
+
+    if (!user) {
       return NextResponse.json(
-        { error: 'Invalid password' },
+        { error: 'Invalid username or password' },
         { status: 401 }
       );
     }
 
-    await createSession();
+    await createSession(user.id);
 
     return NextResponse.json(
-      { success: true, message: 'Logged in successfully' },
+      {
+        success: true,
+        message: 'Logged in successfully',
+        user,
+      },
       { status: 200 }
     );
   } catch (error) {
