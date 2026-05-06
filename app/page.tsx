@@ -6,7 +6,6 @@ import { MovieSearchControls } from "@/components/MovieSearchControls";
 import { Navbar } from "@/components/Navbar";
 import { Pagination } from "@/components/Pagination";
 import { getSession, validateSession } from "@/lib/auth";
-import { sampleMovies } from "@/lib/sample-movies";
 import { getMovies } from "@/lib/movie-data";
 
 export const dynamic = "force-dynamic";
@@ -35,15 +34,14 @@ export default async function Home({
   const limit = 12;
 
   const movies = await getMovies();
-  const sourceMovies = movies.length > 0 ? movies : sampleMovies;
-  const movieSuggestions = sourceMovies.flatMap((movie) => [movie.title, movie.genre]);
+  const movieSuggestions = movies.flatMap((movie) => [movie.title, movie.genre]);
 
   const filteredMovies = query
-    ? sourceMovies.filter((movie) => {
+    ? movies.filter((movie) => {
         const haystack = `${movie.title} ${movie.genre} ${movie.overview}`.toLowerCase();
         return haystack.includes(query.toLowerCase());
       })
-    : sourceMovies;
+    : movies;
 
   const sortedMovies = [...filteredMovies].sort((a, b) => {
     switch (sort) {
@@ -111,7 +109,13 @@ export default async function Home({
             ) : null}
           </div>
 
-          <MovieList movies={paginatedMovies} />
+          {total > 0 ? (
+            <MovieList movies={paginatedMovies} />
+          ) : (
+            <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 p-8 text-slate-400">
+              No movies are available yet. Movies added in the admin panel will appear here.
+            </div>
+          )}
 
           {totalPages > 1 && (
             <div className="flex justify-center">

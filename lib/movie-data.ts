@@ -46,7 +46,9 @@ export function mapMovieDocument(document: MovieDocument): Movie {
 export async function getMovies() {
   const client = await clientPromise;
   const db = client.db();
-  const movies = (await db.collection("movies").find({}).limit(100).toArray()) as MovieDocument[];
+  const collection = db.collection("movies");
+
+  const movies = (await collection.find({}).limit(100).toArray()) as MovieDocument[];
 
   return movies.map(mapMovieDocument);
 }

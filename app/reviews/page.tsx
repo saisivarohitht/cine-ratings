@@ -5,6 +5,8 @@ import { ReviewSearchControls } from "@/components/ReviewSearchControls";
 import { getMovies } from "@/lib/movie-data";
 import { getReviews } from "@/lib/review-data";
 
+export const dynamic = "force-dynamic";
+
 type ReviewsSearchParams = {
   movieId?: string;
   q?: string;

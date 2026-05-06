@@ -3,8 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ReviewForm } from "@/components/ReviewForm";
-import { sampleMovies } from "@/lib/sample-movies";
 import clientPromise from "@/lib/mongodb";
+
+export const dynamic = "force-dynamic";
 
 type ReviewDocument = {
   _id: ObjectId;
@@ -26,25 +27,6 @@ type PageMovie = {
   posterDetailUrl?: string;
 };
 
-function getFallbackMovie(id: string): PageMovie | null {
-  const movie = sampleMovies.find((entry) => entry.id === id);
-
-  if (!movie) {
-    return null;
-  }
-
-  return {
-    title: movie.title,
-    year: movie.year,
-    genre: movie.genre,
-    rating: movie.rating,
-    overview: movie.overview,
-    posterUrl: movie.posterUrl,
-    posterThumbUrl: movie.posterThumbUrl,
-    posterDetailUrl: movie.posterDetailUrl,
-  };
-}
-
 export default async function MovieDetailsPage({
   params,
 }: {
@@ -52,8 +34,7 @@ export default async function MovieDetailsPage({
 }) {
   const { id } = await params;
 
-  const fallbackMovie = getFallbackMovie(id);
-  let movie: PageMovie | null = fallbackMovie;
+  let movie: PageMovie | null = null;
   let reviews: ReviewDocument[] = [];
   let databaseMovieId: string | null = null;
 

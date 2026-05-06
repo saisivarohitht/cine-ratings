@@ -5,6 +5,7 @@ import clientPromise from "../../../lib/mongodb";
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { revalidatePath } from 'next/cache';
 
 export async function GET(req: Request) {
   try {
@@ -129,6 +130,9 @@ export async function POST(req: Request) {
     }
 
     const result = await db.collection("movies").insertOne(movie);
+    revalidatePath('/');
+    revalidatePath('/reviews');
+    revalidatePath('/admin');
     return NextResponse.json({ insertedId: result.insertedId, movie }, { status: 201 });
   } catch (err) {
     console.error(err);

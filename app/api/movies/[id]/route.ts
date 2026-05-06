@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import fs from 'fs/promises';
 import path from 'path';
+import { revalidatePath } from 'next/cache';
 
 import clientPromise from "../../../../lib/mongodb";
 import { UpdateMovieSchema } from "../../../../lib/schemas";
@@ -52,6 +53,10 @@ export async function DELETE(_request: Request, { params }: Params) {
     }
 
     await db.collection("reviews").deleteMany({ movieId: id });
+    revalidatePath('/');
+    revalidatePath('/reviews');
+    revalidatePath('/admin');
+    revalidatePath(`/movie/${id}`);
 
     return NextResponse.json({ deletedId: id });
   } catch (error) {
@@ -143,6 +148,10 @@ export async function PUT(request: Request, { params }: Params) {
       return NextResponse.json({ error: "Movie not found" }, { status: 404 });
     }
 
+    revalidatePath('/');
+    revalidatePath('/reviews');
+    revalidatePath('/admin');
+    revalidatePath(`/movie/${id}`);
     return NextResponse.json({ updatedId: id });
   } catch (error) {
     console.error(error);
