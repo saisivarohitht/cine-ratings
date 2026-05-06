@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 
 import clientPromise from "../../../../lib/mongodb";
 import { recalculateMovieRating } from "@/lib/rating";
+import { formatValidationError } from "@/lib/validation";
+import { UpdateReviewSchema } from "@/lib/schemas";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -48,17 +50,16 @@ export async function PUT(request: Request, { params }: Params) {
     }
 
     const body = await request.json();
-    const rating = Number(body.rating);
-    const text = typeof body.text === "string" ? body.text.trim() : "";
-    const author = typeof body.author === "string" ? body.author.trim() : "Anonymous";
+    const validation = UpdateReviewSchema.safeParse(body);
 
-    if (!Number.isFinite(rating) || rating < 1 || rating > 10) {
-      return NextResponse.json({ error: "Rating must be a number between 1 and 10" }, { status: 400 });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: formatValidationError(validation.error), errors: validation.error.flatten() },
+        { status: 400 }
+      );
     }
 
-    if (!text) {
-      return NextResponse.json({ error: "Review text is required" }, { status: 400 });
-    }
+    const { rating, text, author } = validation.data;
 
     const client = await clientPromise;
     const db = client.db();
@@ -75,7 +76,7 @@ export async function PUT(request: Request, { params }: Params) {
         $set: {
           rating,
           text,
-          author,
+            author: author || "Anonymous",
         },
       }
     );

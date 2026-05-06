@@ -1,5 +1,6 @@
 import { getMovies } from "@/lib/movie-data";
 import { CreateMovieSchema } from "@/lib/schemas";
+import { formatValidationError } from "@/lib/validation";
 import clientPromise from "../../../lib/mongodb";
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
     const validation = CreateMovieSchema.safeParse(data);
     if (!validation.success) {
       return NextResponse.json(
-        { error: "Validation failed", errors: validation.error.flatten() },
+        { error: formatValidationError(validation.error), errors: validation.error.flatten() },
         { status: 400 }
       );
     }

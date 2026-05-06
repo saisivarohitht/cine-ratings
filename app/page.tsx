@@ -85,11 +85,6 @@ export default async function Home({
           <div className="flex items-end justify-between gap-4">
             <div>
               <h2 className="text-2xl font-semibold">Featured movies</h2>
-              <p className="mt-1 text-sm text-slate-400">
-                {movies.length > 0
-                  ? "Live movies from MongoDB"
-                  : "Demo movies while the collection is empty"}
-              </p>
             </div>
           </div>
 

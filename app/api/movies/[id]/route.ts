@@ -5,6 +5,7 @@ import path from 'path';
 
 import clientPromise from "../../../../lib/mongodb";
 import { UpdateMovieSchema } from "../../../../lib/schemas";
+import { formatValidationError } from "../../../../lib/validation";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -73,7 +74,7 @@ export async function PUT(request: Request, { params }: Params) {
     const validation = UpdateMovieSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: "Validation failed", errors: validation.error.flatten() },
+        { error: formatValidationError(validation.error), errors: validation.error.flatten() },
         { status: 400 }
       );
     }

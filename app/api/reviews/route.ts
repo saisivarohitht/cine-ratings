@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import clientPromise from "../../../lib/mongodb";
 import { recalculateMovieRating } from "@/lib/rating";
 import { CreateReviewSchema } from "@/lib/schemas";
+import { formatValidationError } from "@/lib/validation";
 
 export async function GET(request: Request) {
   try {
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
     const validation = CreateReviewSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { error: "Validation failed", errors: validation.error.flatten() },
+        { error: formatValidationError(validation.error), errors: validation.error.flatten() },
         { status: 400 }
       );
     }

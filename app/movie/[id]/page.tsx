@@ -90,6 +90,7 @@ export default async function MovieDetailsPage({
     reviews.length > 0
       ? (reviews.reduce((total, review) => total + review.rating, 0) / reviews.length).toFixed(1)
       : movie.rating?.toFixed(1) ?? "N/A";
+  const posterSrc = movie.posterDetailUrl || movie.posterThumbUrl || movie.posterUrl;
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-12 text-white lg:px-8">
@@ -99,8 +100,8 @@ export default async function MovieDetailsPage({
 
       <section className="grid gap-8 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/20 lg:grid-cols-[320px_1fr] lg:p-8">
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60">
-          {movie.posterUrl ? (
-            <img src={movie.posterDetailUrl || movie.posterUrl} alt={movie.title} className="h-full w-full object-cover" />
+          {posterSrc ? (
+            <img src={posterSrc} alt={movie.title} className="h-full w-full object-cover" />
           ) : (
             <div className="flex min-h-105 items-center justify-center bg-linear-to-br from-amber-300/30 via-slate-950 to-slate-900 px-6 text-center text-3xl font-semibold text-white">
               {movie.title}
@@ -123,15 +124,6 @@ export default async function MovieDetailsPage({
             <div className="rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-sm font-semibold text-amber-200">
               Average rating: {averageRating}
             </div>
-            {databaseMovieId ? (
-              <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300">
-                MongoDB-backed movie
-              </div>
-            ) : (
-              <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300">
-                Demo movie
-              </div>
-            )}
           </div>
 
           <p className="max-w-3xl text-lg leading-8 text-slate-300">{movie.overview}</p>

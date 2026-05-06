@@ -14,10 +14,6 @@ type MovieFormState = {
   cardFilename?: string;
   cardMime?: string;
   cardData?: string;
-  // detail image (1000x667)
-  detailFilename?: string;
-  detailMime?: string;
-  detailData?: string;
 };
 
 const initialState: MovieFormState = {
@@ -29,9 +25,6 @@ const initialState: MovieFormState = {
   cardFilename: undefined,
   cardMime: undefined,
   cardData: undefined,
-  detailFilename: undefined,
-  detailMime: undefined,
-  detailData: undefined,
 };
 
 export function MovieForm() {
@@ -57,9 +50,6 @@ export function MovieForm() {
           overview: form.overview,
           cardImage: form.cardData
             ? { filename: form.cardFilename, mime: form.cardMime, data: form.cardData }
-            : undefined,
-          detailImage: form.detailData
-            ? { filename: form.detailFilename, mime: form.detailMime, data: form.detailData }
             : undefined,
         }),
       });
@@ -95,9 +85,6 @@ export function MovieForm() {
           Add a movie
         </p>
         <h2 className="mt-3 text-3xl font-semibold">Create a new movie entry</h2>
-        <p className="mt-2 text-sm text-slate-400">
-          This will save directly to MongoDB and appear on the homepage.
-        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -145,7 +132,7 @@ export function MovieForm() {
         </label>
 
         <label className="space-y-2 text-sm text-slate-300 sm:col-span-2">
-          <span>Card image (500×333)</span>
+          <span>Card image</span>
           <div className="flex items-center gap-3">
             <input
               type="file"
@@ -184,56 +171,6 @@ export function MovieForm() {
                   type="button"
                   onClick={() =>
                     setForm((current) => ({ ...current, cardFilename: undefined, cardMime: undefined, cardData: undefined }))
-                  }
-                  className="text-sm text-amber-300 hover:text-amber-200"
-                >
-                  Remove
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </label>
-
-        <label className="space-y-2 text-sm text-slate-300 sm:col-span-2">
-          <span>Detail image (1000×667)</span>
-          <div className="flex items-center gap-3">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () => {
-                  const result = reader.result as string | null;
-                  if (!result) return;
-                  const comma = result.indexOf(",");
-                  const meta = result.substring(5, comma);
-                  const mime = meta.split(";")[0];
-                  const data = result.substring(comma + 1);
-                  setForm((current) => ({
-                    ...current,
-                    detailFilename: file.name,
-                    detailMime: mime,
-                    detailData: data,
-                  }));
-                };
-                reader.readAsDataURL(file);
-              }}
-              className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none transition focus:border-amber-300/50"
-            />
-
-            {form.detailData ? (
-              <div className="flex items-center gap-3">
-                <img
-                  src={`data:${form.detailMime};base64,${form.detailData}`}
-                  alt="detail preview"
-                  className="h-20 w-32 rounded object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setForm((current) => ({ ...current, detailFilename: undefined, detailMime: undefined, detailData: undefined }))
                   }
                   className="text-sm text-amber-300 hover:text-amber-200"
                 >

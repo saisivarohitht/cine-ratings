@@ -84,11 +84,11 @@ export default async function ReviewsPage({
             <h1 className="text-4xl font-semibold">
               {selectedMovie ? `${selectedMovie.title} reviews` : "All reviews"}
             </h1>
-            <p className="mt-3 max-w-2xl text-slate-300">
-              {selectedMovie
-                ? `Showing reviews for ${selectedMovie.title}.`
-                : "Browse the latest reviews stored in MongoDB."}
-            </p>
+            {selectedMovie ? (
+              <p className="mt-3 max-w-2xl text-slate-300">
+                Showing reviews for {selectedMovie.title}.
+              </p>
+            ) : null}
           </div>
           {movieId ? (
             <Link
